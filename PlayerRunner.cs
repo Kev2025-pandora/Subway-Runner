@@ -5,7 +5,7 @@ using UnityEngine;
 public class PlayerRunner : MonoBehaviour
 {
     [Header("Movement")]
-    public float forwardSpeed = 8f;
+    public SpeedManager speedManager;
     public float laneDistance = 3f;
     public float laneChangeSpeed = 10f;
 
@@ -224,61 +224,70 @@ public class PlayerRunner : MonoBehaviour
         }
     }
 
-    void AnimateSlide()
+    
+void AnimateSlide()
+{
+    // Check whether the player is giant
+    PlayerGrowth growth = GetComponent<PlayerGrowth>();
+
+    // Only animate slide scale when not giant
+    if (visualRoot != null &&
+        (growth == null || !growth.IsGiant))
     {
-        // Smoothly animate the visual model
-        if (visualRoot != null)
-        {
-            visualRoot.localScale = Vector3.Lerp(
-                visualRoot.localScale,
-                targetVisualScale,
-                slideTransitionSpeed * Time.deltaTime
-            );
-        }
-
-        // Smoothly lower or raise the camera
-        if (playerCamera != null)
-        {
-            Vector3 targetCameraPosition = normalCameraPosition;
-
-            if (isSliding)
-            {
-                targetCameraPosition -= new Vector3(
-                    0f,
-                    slideCameraDrop,
-                    0f
-                );
-            }
-
-            playerCamera.localPosition = Vector3.Lerp(
-                playerCamera.localPosition,
-                targetCameraPosition,
-                slideTransitionSpeed * Time.deltaTime
-            );
-        }
+        visualRoot.localScale = Vector3.Lerp(
+            visualRoot.localScale,
+            targetVisualScale,
+            slideTransitionSpeed * Time.deltaTime
+        );
     }
+
+    // Smoothly lower or raise the camera
+    if (playerCamera != null)
+    {
+        Vector3 targetCameraPosition = normalCameraPosition;
+
+        if (isSliding)
+        {
+            targetCameraPosition -= new Vector3(
+                0f,
+                slideCameraDrop,
+                0f
+            );
+        }
+
+        playerCamera.localPosition = Vector3.Lerp(
+            playerCamera.localPosition,
+            targetCameraPosition,
+            slideTransitionSpeed * Time.deltaTime
+        );
+    }
+}
+
 
     void MovePlayer()
-    {
-        // Calculate the target lane position
-        float targetX = currentLane * laneDistance;
+{
+    // Calculate the target lane position
+    float targetX = currentLane * laneDistance;
 
-        float newX = Mathf.MoveTowards(
-            transform.position.x,
-            targetX,
-            laneChangeSpeed * Time.deltaTime
-        );
+    float newX = Mathf.MoveTowards(
+        transform.position.x,
+        targetX,
+        laneChangeSpeed * Time.deltaTime
+    );
 
-        float horizontalMovement =
-            newX - transform.position.x;
+    float horizontalMovement =
+        newX - transform.position.x;
 
-        // Move forward and apply vertical velocity
-        Vector3 movement = new Vector3(
-            horizontalMovement,
-            velocity.y * Time.deltaTime,
-            forwardSpeed * Time.deltaTime
-        );
+    // Get the current forward speed
+    float currentSpeed = speedManager.currentSpeed;
 
-        controller.Move(movement);
-    }
+    // Move forward and apply vertical velocity
+    Vector3 movement = new Vector3(
+        horizontalMovement,
+        velocity.y * Time.deltaTime,
+        currentSpeed * Time.deltaTime
+    );
+
+    controller.Move(movement);
+}
 }
